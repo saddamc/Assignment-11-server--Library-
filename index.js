@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 // const jwt = require('jsonwebtoken');  /**token related import */
 // const cookieParser = require('cookie-parser'); 
 // const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -16,7 +16,7 @@ app.use(cors({
 //   ],
 //   credentials: true
 }));
-// app.use(express.json());
+app.use(express.json());
 // app.use(cookieParser());
 
 
@@ -39,12 +39,55 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+    const bookCollection = client.db('schoolLibrary').collection('books');
+    const borrowedCollection = client.db('schoolLibrary').collection('borroweds');
+
+    app.get('/books', async(req, res) =>{
+      const cursor = bookCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
+    // book relased api
+    app.get('/books/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+
+       const options = {
+            // Include only the `title` and `imdb` fields in the returned document
+            projection: { name: 1, author: 1, book_id: 1, image: 1, category: 1, rating: 1 },
+    };
+
+      const result = await bookCollection.findOne(query);
+      res.send(result);
+    })
+
+    // borrowed
+    app.get('/borroweds', async(req, res) => {
+      console.log(req.query.email);
+      let query = {};
+      if(req.query?.email){
+        query = {email: req.query.email}
+      }
+      const result =await borrowedCollection.find().toArray();
+      res.send(result);
+    })
+
+    app.post('/borroweds', async(req, res) => {
+      const borrowed = req.body;
+      console.log(borrowed);
+      const result = await borrowedCollection.insertOne(borrowed);
+      res.send(result);
+    })
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
-    // await client.close();
+    // await client.close(); /**must be off 1st otherwise can't find get data */
   }
 }
 run().catch(console.dir);
@@ -56,5 +99,5 @@ app.get('/', (req, res) => {
 })
 
 app.listen(port, () => {
-    console.log(`Books Server is running on port ${port} `)
+    console.log(`Books Server is running on port ${port}`)
 })
