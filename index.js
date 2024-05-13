@@ -1,22 +1,25 @@
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');  /**token related import */
-// const cookieParser = require('cookie-parser'); 
+const cookieParser = require('cookie-parser'); 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
-const app = express();
 const port = process.env.PORT || 5000;
 
+const app = express();
+
 // middleware
-app.use(cors({
+const corsOptions = {
   origin: [
     'http://localhost:5173'    
   ],
-  credentials: true
-}));
-app.use(express.json());
-// app.use(cookieParser());
+  credentials: true,
+  optionSuccessStatus: 200,
+}
+app.use(cors(corsOptions));
 
+app.use(express.json());
+app.use(cookieParser());
 
 
 // console.log(process.env.DU_USER)
@@ -40,16 +43,17 @@ async function run() {
 
     const bookCollection = client.db('schoolLibrary').collection('books');
     const borrowedCollection = client.db('schoolLibrary').collection('borroweds');
+    const bidsBookCollection = client.db('schoolLibrary').collection('my-bids');
 
     // auth related api
     app.post('/jwt', async(req, res) => {
       const user = req.body;
       console.log(user);
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'})
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'});
       res
       .cookie('token', token, {
         httpOnly: true,
-        secure: false,   
+        secure: false,  
       })
       .send({success: true})
     })
@@ -82,6 +86,7 @@ async function run() {
     // borrowed
     app.get('/borroweds', async(req, res) => {
       console.log(req.query.email);
+      console.log('tok tok toknen', req.cookies.token)
       let query = {};
       if(req.query?.email){
         query = {email: req.query.email}
@@ -97,6 +102,24 @@ async function run() {
       res.send(result);
     })
 
+    /** My bids book collection in mongoDB  */
+    app.get('bids-book/:email', async(req, res) =>{
+      const email = req.params.email;
+      const query = { email}
+      const result = await bidsBookCollection.find(query).toArray()
+      res.send(result);
+    })
+
+    app.get('bids-book/:email', async(req, res) =>{
+      const email = req.params.email;
+      const query = {'keeper.email': email}
+      const result = await bidsBookCollection.find(query).toArray()
+      res.send(result);
+    })
+
+
+    
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
@@ -111,7 +134,7 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-    res.send('book is running')
+    res.send('Hello from Public Library Scientia Server...')
 })
 
 app.listen(port, () => {
