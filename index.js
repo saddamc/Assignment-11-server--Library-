@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');  /**token related import */
-const cookieParser = require('cookie-parser'); 
+// const cookieParser = require('cookie-parser'); 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const app = express();
@@ -9,11 +9,10 @@ const port = process.env.PORT || 5000;
 
 // middleware
 app.use(cors({
-//   origin: [
-//     'http://localhost:5173',
-    
-//   ],
-//   credentials: true
+  origin: [
+    'http://localhost:5173'    
+  ],
+  credentials: true
 }));
 app.use(express.json());
 // app.use(cookieParser());
@@ -47,7 +46,12 @@ async function run() {
       const user = req.body;
       console.log(user);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'})
-      res.send(token)
+      res
+      .cookie('token', token, {
+        httpOnly: true,
+        secure: false,   
+      })
+      .send({success: true})
     })
 
 
