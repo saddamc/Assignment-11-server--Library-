@@ -1,8 +1,8 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');  /**token related import */
+const cookieParser = require('cookie-parser'); 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-// const jwt = require('jsonwebtoken');  /**token related import */
-// const cookieParser = require('cookie-parser'); 
 require('dotenv').config()
 const app = express();
 const port = process.env.PORT || 5000;
@@ -42,6 +42,19 @@ async function run() {
     const bookCollection = client.db('schoolLibrary').collection('books');
     const borrowedCollection = client.db('schoolLibrary').collection('borroweds');
 
+    // auth related api
+    app.post('/jwt', async(req, res) => {
+      const user = req.body;
+      console.log(user);
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'})
+      res.send(token)
+    })
+
+
+
+
+
+// books related api
     app.get('/books', async(req, res) =>{
       const cursor = bookCollection.find();
       const result = await cursor.toArray();
