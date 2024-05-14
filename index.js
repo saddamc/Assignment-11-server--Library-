@@ -39,11 +39,13 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
+
+    // Data collection
     const bookCollection = client.db('schoolLibrary').collection('books');
     const borrowedCollection = client.db('schoolLibrary').collection('borroweds');
-    const bidsBookCollection = client.db('schoolLibrary').collection('my-bids');
+    // const bidsBookCollection = client.db('schoolLibrary').collection('my-bids');
 
     // auth related api
     app.post('/jwt', async(req, res) => {
@@ -63,14 +65,14 @@ async function run() {
 
 
 // books related api
-    app.get('/books', async(req, res) =>{
+    app.get('/book', async(req, res) =>{
       const cursor = bookCollection.find();
       const result = await cursor.toArray();
       res.send(result);
     })
 
     // book relased api
-    app.get('/books/:id', async(req, res) => {
+    app.get('/book/:id', async(req, res) => {
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
 
@@ -101,22 +103,23 @@ async function run() {
       const result = await borrowedCollection.insertOne(borrowed);
       res.send(result);
     })
-
-    /** My bids book collection in mongoDB  */
-    app.get('bids-book/:email', async(req, res) =>{
-      const email = req.params.email;
-      const query = { email}
-      const result = await bidsBookCollection.find(query).toArray()
+    // save a book data in DB
+    app.post('/book', async(req, res) => {
+      const bookData = req.body;
+      const result = await bookCollection.insertOne(bookData)
       res.send(result);
     })
 
-    app.get('bids-book/:email', async(req, res) =>{
+
+    // get all books posted by a specific user
+    app.get('/book/:email', async(req, res) => {
       const email = req.params.email;
-      const query = {'keeper.email': email}
-      const result = await bidsBookCollection.find(query).toArray()
+      const query = {email: email}
+      const result = await bookCollection.find(query).toArray();
       res.send(result);
     })
 
+    
 
     
 
@@ -126,7 +129,7 @@ async function run() {
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
-    // await client.close(); /**must be off 1st otherwise can't find get data */
+    // await client.close(); 
   }
 }
 run().catch(console.dir);
