@@ -75,17 +75,16 @@ async function run() {
     app.get('/book/:id', async(req, res) => {
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
-
        const options = {
             // Include only the `title` and `imdb` fields in the returned document
-            projection: { book: 1, author: 1, book_id: 1, image: 1, category: 1, rating: 1 },
+            projection: { book: 1, author: 1, book_id: 1, image: 1, category: 1, rating: 1, description: 1, quantity: 1},
     };
 
-      const result = await bookCollection.findOne(query);
+      const result = await bookCollection.findOne(query, options);
       res.send(result);
     })
 
-    // borrowed
+    // borrowed book
     app.get('/borroweds', async(req, res) => {
       console.log(req.query.email);
       console.log('tok tok toknen', req.cookies.token)
@@ -105,6 +104,7 @@ async function run() {
       res.send(result);
     })
 
+
     app.post('/borroweds', async(req, res) => {
       const borrowed = req.body;
       console.log(borrowed);
@@ -119,7 +119,7 @@ async function run() {
     })
 
 
-    // get all books posted by a specific user => simple way 1
+    // get all books posted by a specific user => simple way => ok
     app.get('/books', async(req, res) => {
       let query = {};
       if(req.query?.email){
@@ -128,24 +128,32 @@ async function run() {
       const result =await bookCollection.find(query).toArray();
       res.send(result);
     })
-    // delete books
+    // delete books = ok
     app.delete('/books/:id', async(req, res) => {
       const id = req.params.id;
       let query = {_id: new ObjectId(id)};
       const result =await bookCollection.deleteOne(query);
       res.send(result);
     })
-    // get all books posted by a specific user => way 2
-    // app.get('/books/:email', async(req, res) => {
-    //   const email = req.params.email;
-    //   let query = {email: email};
-    //   const result =await bookCollection.find(query).toArray();
-    //   res.send(result);
-    // })
+
+    // update a book 
+    app.put('/books/:id', async(req, res) =>{
+      const id = req.params.id;
+      const bookData = req.body;
+      const query = {_id: new ObjectId(id)}
+      const options = {upsert: true}
+      const updateDoc = {
+        $set: {
+          ...bookData,
+        }
+      }
+      const result = await bookCollection.updateOne(query, updateDoc, options)
+      res.send(result);
+    })
+
     
 
-
-    
+   
 
 
     // Send a ping to confirm a successful connection
