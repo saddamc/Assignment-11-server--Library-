@@ -97,6 +97,14 @@ async function run() {
       res.send(result);
     })
 
+    // return borrowed book
+    app.delete('/borroweds/:id', async(req, res) => {
+      const id = req.params.id;
+      let query = {_id: new ObjectId(id)};
+      const result =await borrowedCollection.deleteOne(query);
+      res.send(result);
+    })
+
     app.post('/borroweds', async(req, res) => {
       const borrowed = req.body;
       console.log(borrowed);
@@ -113,13 +121,18 @@ async function run() {
 
     // get all books posted by a specific user => simple way 1
     app.get('/books', async(req, res) => {
-      console.log(req.query.email);
-      console.log('tok tok book', req.cookies.token)
       let query = {};
       if(req.query?.email){
         query = {email: req.query.email}
       }
       const result =await bookCollection.find(query).toArray();
+      res.send(result);
+    })
+    // delete books
+    app.delete('/books/:id', async(req, res) => {
+      const id = req.params.id;
+      let query = {_id: new ObjectId(id)};
+      const result =await bookCollection.deleteOne(query);
       res.send(result);
     })
     // get all books posted by a specific user => way 2
